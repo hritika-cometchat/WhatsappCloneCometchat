@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="8dp"
+    android:background="?android:attr/selectableItemBackground"
+    android:gravity="center_vertical">
+
+    <!-- Sender's Avatar -->
+    <ImageView
+        android:id="@+id/imgSenderAvatar"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="8dp"
+        android:src="@drawable/ic_avatar_placeholder"
+        android:contentDescription="Sender Avatar"
+        android:scaleType="centerCrop"
+        android:layout_gravity="start"/>
+
+    <!-- Sender's Name -->
+    <TextView
+        android:id="@+id/txtSenderName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sender's Name"
+        android:textColor="@color/black"
+        android:textSize="16sp"
+        android:layout_marginEnd="8dp"
+        android:layout_gravity="start"/>
+
+    <!-- Message Timestamp -->
+    <TextView
+        android:id="@+id/txtTimestamp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Timestamp"
+        android:textColor="@color/gray"
+        android:textSize="12sp"
+        android:layout_gravity="end"/>
+
+</LinearLayout>

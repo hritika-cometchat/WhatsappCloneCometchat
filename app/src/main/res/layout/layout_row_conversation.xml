@@ -1,0 +1,143 @@
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="12dp"
+    android:paddingHorizontal="14dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/clProfile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="14dp">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/ivProfile"
+            android:layout_width="54dp"
+            android:layout_height="54dp"
+            android:src="@drawable/ic_avatar_placeholder"
+            app:shapeAppearance="@style/CornerCut"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            />
+
+        <ImageView
+            android:id="@+id/ivOnline"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:visibility="gone"
+            android:src="@drawable/ic_circle_plain"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="@id/ivProfile"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:layout_below="@id/clProfile"
+        android:layout_toEndOf="@id/clProfile"
+        android:background="#82bdbdbd"
+        android:orientation="vertical"
+        android:layout_marginTop="10dp">
+
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/textLL"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginStart="68dp"
+        android:layout_marginTop="4dp">
+
+        <TextView
+            android:id="@+id/tvConvoName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Contact Name"
+            android:fontFamily="sans-serif-light"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:textColor="#000000"/>
+
+        <LinearLayout
+            android:id="@+id/llConvoMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_below="@id/tvConvoName">
+
+            <ImageView
+                android:id="@+id/ivMsgReceipt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_send"
+                android:paddingEnd="4dp"
+                />
+
+            <TextView
+                android:id="@+id/tvConvoMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="Message"
+                android:textSize="15sp"
+                android:gravity="center_vertical"
+                android:textColor="@color/secondaryTextColor" />
+        </LinearLayout>
+
+
+
+        <TextView
+            android:id="@+id/tvTypingStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:text="Typing..."
+            android:textSize="15sp"
+            android:textColor="#91000000"
+            android:visibility="gone"
+            android:layout_below="@id/tvConvoName"/>
+
+    </RelativeLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:orientation="vertical"
+        android:layout_alignParentEnd="true">
+
+        <TextView
+            android:id="@+id/tvTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="6dp"
+            android:textSize="13sp"
+            android:layout_gravity="top"
+            android:text="9:11 AM"
+            android:textColor="@color/secondaryTextColor"/>
+
+        <TextView
+            android:id="@+id/tvCount"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:padding="8dp"
+            android:textSize="10sp"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_gravity="center_vertical|end"
+            android:background="@drawable/ic_circle_plain"
+            android:text="100"/>
+    </LinearLayout>
+
+
+</RelativeLayout>

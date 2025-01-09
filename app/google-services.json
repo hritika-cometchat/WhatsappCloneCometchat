@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "514149687462",
+    "project_id": "testapplicationcometchat",
+    "storage_bucket": "testapplicationcometchat.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:514149687462:android:41b6c5970245a9a0bf9467",
+        "android_client_info": {
+          "package_name": "com.example.testapplication"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDM_FXj6WZN5Tuwp76B3rF55vC8HsGM2Fs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

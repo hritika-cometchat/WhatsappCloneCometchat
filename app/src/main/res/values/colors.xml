@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Colors to apply in layouts -->
+    <color name="colorPrimary">@color/green_darker</color>
+    <color name="colorPrimaryDark">@color/green_darkest</color>
+    <color name="tab_active">@color/white</color>
+    <color name="tab_inactive">@color/green_light</color>
+    <color name="floating_message_create">@color/green</color>
+    <color name="channel_background">@color/off_white</color>
+    <color name="toolbar_background">@color/green_darker</color>
+    <color name="message_yours">@color/green_lightest</color>
+    <color name="message_theirs">@color/white</color>
+    <color name="message_input_button_inactive">@color/gray</color>
+    <color name="floating_message_send">@color/green_dark</color>
+
+    <color name="blue_light">#80C2E8</color>
+    <color name="blue_lightest">#A1C8DE</color>
+    <color name="blue_lighter">#F2F4F4</color>
+
+    <!-- Palette Greens -->
+    <color name="green_lightest">#EBFBE5</color>
+    <color name="green_lighter">#CDF0D8</color>
+    <color name="green_highlight">#C4F8B1</color>
+    <color name="green">#1EBE71</color>
+    <color name="green_light_dark">#099050</color>
+    <color name="green_light">#68ED85</color>
+    <color name="green_dark">#19887a</color>
+    <color name="green_darker">#0e5e55</color>
+    <color name="green_darkest">#00574B</color>
+
+    <!-- White & Gray -->
+    <color name="primaryTextColor">#000000</color>
+    <color name="secondaryTextColor">#91000000</color>
+
+    <color name="green_new">#1EBE71</color>
+
+
+    <color name="white">#FFF</color>
+    <color name="black">#000</color>
+    <color name="red">#E10606</color>
+    <color name="off_white">#FBF8F2</color>
+    <color name="gray">#88898b</color>
+</resources>
