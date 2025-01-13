@@ -29,7 +29,7 @@ import com.cometchat.chat.enums.PushPlatforms
 import com.cometchat.chat.exceptions.CometChatException
 import com.cometchat.chat.models.Group
 import com.cometchat.chat.models.User
-import com.example.testapplication.Activity.Ui.CometChatUiActivity
+import com.example.testapplication.Activity.DashboardActivity
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.FirebaseMessaging
@@ -137,7 +137,7 @@ class CometChatNotification {
     }
 
 
-    fun startIncomingCall(call: Call) {
+    private fun startIncomingCall(call: Call) {
         val entity = call.callInitiator
 
         if (context!!.checkSelfPermission(Manifest.permission.MANAGE_OWN_CALLS) == PackageManager.PERMISSION_GRANTED) {
@@ -292,9 +292,12 @@ class CometChatNotification {
             )
         }
 
-        val intent = Intent(context, CometChatUiActivity::class.java)
-
-        intent.putExtra(AppConstants.NOTIFICATION_PAYLOAD, payload.toString())
+        val intent = Intent(context, DashboardActivity::class.java)
+            .apply {
+                putExtra(AppConstants.NOTIFICATION_PAYLOAD, payload.toString())
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+        Log.e("PAYLOAD", payload.toString())
         val pendingIntent = PendingIntent.getActivity(
             context,
             501,
