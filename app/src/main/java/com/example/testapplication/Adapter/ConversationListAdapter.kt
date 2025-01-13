@@ -13,17 +13,17 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.cometchat.chat.constants.CometChatConstants
 import com.cometchat.chat.core.CometChat
+import com.cometchat.chat.enums.MutedConversationType
 import com.cometchat.chat.models.Action
-import com.cometchat.chat.models.BaseMessage
 import com.cometchat.chat.models.Conversation
 import com.cometchat.chat.models.CustomMessage
 import com.cometchat.chat.models.Group
 import com.cometchat.chat.models.MediaMessage
 import com.cometchat.chat.models.MessageReceipt
+import com.cometchat.chat.models.MutedConversation
 import com.cometchat.chat.models.TextMessage
 import com.cometchat.chat.models.TypingIndicator
 import com.cometchat.chat.models.User
-import com.example.testapplication.Activity.MessageAdapter.OnLongClickListener
 import com.example.testapplication.R
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -38,6 +38,7 @@ class ConversationListAdapter(private val context: Context) :
     private var onLongClickListener: OnLongClickListener? = null
     var convos: MutableList<Conversation>? = null
     var currentUserUid = ""
+    var mutedConversationsList : List<MutedConversation>? = null
     private var selectedItems = mutableSetOf<Int>()
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -50,6 +51,7 @@ class ConversationListAdapter(private val context: Context) :
         val ivOnline: ImageView = view.findViewById(R.id.ivOnline)
         val ivMsgReceipt: ImageView = view.findViewById(R.id.ivMsgReceipt)
         val llConvoMessage: LinearLayout = view.findViewById(R.id.llConvoMessage)
+        val ivNotify : ImageView = view.findViewById(R.id.ivNotify)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -70,6 +72,7 @@ class ConversationListAdapter(private val context: Context) :
         }
 
         if (cItem != null) {
+            updateMuteState(cItem, holder)
             holder.tvCount.visibility = if (cItem.unreadMessageCount != 0) {
                 holder.tvCount.text = String.format(cItem.unreadMessageCount.toString())
                 holder.cLastTime.setTypeface(Typeface.DEFAULT_BOLD)
@@ -221,6 +224,25 @@ class ConversationListAdapter(private val context: Context) :
                 notifyItemChanged(it)
             }
         }
+    }
+
+    private fun isConversationMuted(conversation: Conversation): Boolean {
+        val type = if (conversation.conversationType == CometChatConstants.CONVERSATION_TYPE_USER)
+            MutedConversationType.ONE_ON_ONE
+        else
+            MutedConversationType.GROUP
+
+        return mutedConversationsList?.any {
+           val id =  if (conversation.conversationType == CometChatConstants.CONVERSATION_TYPE_GROUP){
+               (conversation.conversationWith as Group).guid
+            } else (conversation.conversationWith as User).uid
+            it.id == id && it.type == type
+        } ?: false
+    }
+
+    private fun updateMuteState(cItem: Conversation, holder: ViewHolder) {
+        val mute = isConversationMuted(cItem)
+        holder.ivNotify.visibility = if (mute) View.VISIBLE else View.GONE
     }
 
 }

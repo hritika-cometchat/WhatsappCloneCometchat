@@ -11,4 +11,16 @@
         android:title="Edit"
         android:icon="@drawable/ic_edit"
         app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/menu_mute"
+        android:title="Mute Notification"
+        android:icon="@drawable/ic_notifications_off"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/menu_unmute"
+        android:title="Mute Notification"
+        android:icon="@drawable/ic_notifications"
+        app:showAsAction="ifRoom" />
 </menu>

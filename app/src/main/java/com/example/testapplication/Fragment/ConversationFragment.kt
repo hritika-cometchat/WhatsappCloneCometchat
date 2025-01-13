@@ -6,16 +6,21 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.ActionMode
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ProgressBar
+import android.widget.RadioButton
+import android.widget.RadioGroup
+import android.widget.Toast
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.cometchat.chat.constants.CometChatConstants
 import com.cometchat.chat.core.CometChat
+import com.cometchat.chat.core.CometChatNotifications
 import com.cometchat.chat.core.ConversationsRequest.ConversationsRequestBuilder
+import com.cometchat.chat.enums.MutedConversationType
 import com.cometchat.chat.exceptions.CometChatException
 import com.cometchat.chat.helpers.CometChatHelper
 import com.cometchat.chat.models.BaseMessage
@@ -24,24 +29,26 @@ import com.cometchat.chat.models.CustomMessage
 import com.cometchat.chat.models.Group
 import com.cometchat.chat.models.MediaMessage
 import com.cometchat.chat.models.MessageReceipt
+import com.cometchat.chat.models.MutedConversation
+import com.cometchat.chat.models.NotificationPreferences
 import com.cometchat.chat.models.TextMessage
 import com.cometchat.chat.models.TypingIndicator
+import com.cometchat.chat.models.UnmutedConversation
 import com.cometchat.chat.models.User
 import com.example.testapplication.Activity.ConversationMsgActivity
 import com.example.testapplication.Activity.UsersListActivity
 import com.example.testapplication.Adapter.ConversationListAdapter
 import com.example.testapplication.ApiInterface
 import com.example.testapplication.AppConstants
-import com.example.testapplication.Model.AuthUser
 import com.example.testapplication.Model.Conversations
 import com.example.testapplication.R
 import com.example.testapplication.RetrofitInstance
 import com.example.testapplication.databinding.FragmentConversationBinding
 import com.google.gson.Gson
-import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
-import okhttp3.ResponseBody
+import org.json.JSONException
+import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Response
 
@@ -62,6 +69,16 @@ class ConversationFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val payload = arguments?.getString(AppConstants.NOTIFICATION_PAYLOAD).orEmpty()
+        if (payload.isNotEmpty()) {
+            try {
+                val jsonPayload = JSONObject(payload)
+                navigateToConversationNotify(jsonPayload)
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+        }
+
         cAdapter = ConversationListAdapter(requireContext())
         binding.rvConversations.apply {
             layoutManager = LinearLayoutManager(requireContext())
@@ -70,6 +87,8 @@ class ConversationFragment : Fragment() {
 
         getConversationList()
 //        getConversationsList()
+        fetchPreferences()
+        getMutedConversations()
 
         binding.floatBtnNewChat.setOnClickListener {
             startActivity(Intent(requireContext(), UsersListActivity::class.java))
@@ -88,6 +107,37 @@ class ConversationFragment : Fragment() {
             override fun onClick(position: Int, cItem: Conversation) {
                 startActionMode()
                 toggleSelection(cItem, position)
+            }
+        })
+    }
+
+    private fun fetchPreferences(){
+        CometChatNotifications.fetchPreferences(object :
+            CometChat.CallbackListener<NotificationPreferences>() {
+            override fun onSuccess(notificationPreferences: NotificationPreferences) {
+                val mutePreferences = notificationPreferences.mutePreferences
+                val dndPreference = mutePreferences.dndPreference
+                Log.w("MutePreference", mutePreferences.toJson().toString())
+                Log.w("dndPreference", dndPreference.toString())
+
+            }
+
+            override fun onError(e: CometChatException) {
+                Log.e("MutePreference", e.message.toString())
+            }
+        })
+    }
+
+    private fun getMutedConversations() {
+        CometChatNotifications.getMutedConversations(object :
+            CometChat.CallbackListener<List<MutedConversation>?>() {
+            override fun onSuccess(mutedConversations: List<MutedConversation>?) {
+                cAdapter.mutedConversationsList = mutedConversations
+                Log.d("MutedConvos", mutedConversations.toString())
+            }
+
+            override fun onError(e: CometChatException) {
+                Log.e("MutedConvos", e.message.toString())
             }
         })
     }
@@ -143,9 +193,9 @@ class ConversationFragment : Fragment() {
                                 val conversationsWith = cItem.conversationWith as? User ?: return@forEach
                                 val isOnline = conversationsWith.status == CometChatConstants.USER_STATUS_ONLINE
                                 cAdapter.updateUserStatus(conversationsWith, isOnline)
+                                cAdapter.notifyDataSetChanged()
                             }
                         }
-                        cAdapter.notifyDataSetChanged()
                     }
                 }
             }
@@ -180,6 +230,36 @@ class ConversationFragment : Fragment() {
         startActivity(intent)
     }
 
+    private fun navigateToConversationNotify(payload: JSONObject) {
+        val conversationId = payload.optString("conversationId")
+        val senderId = payload.optString("sender")
+        val receiverType = payload.optString("receiverType")
+        val senderName = payload.optString("senderName")
+        val senderAvatar = payload.optString("senderAvatar")
+
+        val intent = Intent(requireContext(), ConversationMsgActivity::class.java).apply {
+            when (receiverType) {
+                "group" -> {
+                    putExtra("EXTRA_ID", senderId)
+                    val group = Group().apply {
+                        name = senderName
+                        icon = senderAvatar
+                    }
+                    putExtra("EXTRA_SENDER", Gson().toJson(group))
+                }
+                "user" -> {
+                    putExtra("EXTRA_ID", senderId)
+                    val user = User().apply {
+                        name = senderName
+                        avatar = senderAvatar
+                    }
+                    putExtra("EXTRA_SENDER", Gson().toJson(user))
+                }
+            }
+        }
+        startActivity(intent)
+    }
+
     private fun toggleSelection(cItem: Conversation, position: Int) {
         if (selectedConversations.contains(cItem)) {
             selectedConversations.remove(cItem)
@@ -205,6 +285,14 @@ class ConversationFragment : Fragment() {
                     return when (item?.itemId) {
                         R.id.menu_delete -> {
                             showAlertDelete()
+                            true
+                        }
+                        R.id.menu_mute -> {
+                            showAlertSelection()
+                            true
+                        }
+                        R.id.menu_unmute -> {
+                            unmuteSelectedConversations()
                             true
                         }
                         else -> false
@@ -243,6 +331,106 @@ class ConversationFragment : Fragment() {
         }
         builder.setCanceledOnTouchOutside(false)
         builder.show()
+    }
+
+    private fun showAlertSelection() {
+        val builder = AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog).create()
+        val view = layoutInflater.inflate(R.layout.dialog_mute_notifications, null)
+
+        val btnCancel = view.findViewById<Button>(R.id.btnCancel)
+        val btnYes = view.findViewById<Button>(R.id.btnYes)
+        val radioGroup = view.findViewById<RadioGroup>(R.id.radioGroup)
+        val rbAlways = view.findViewById<RadioButton>(R.id.rbAlways)
+
+        rbAlways.isChecked = true
+        builder.setView(view)
+        btnCancel.setOnClickListener {
+            builder.dismiss()
+        }
+
+        btnYes.setOnClickListener {
+            val selectedOptionId = radioGroup.checkedRadioButtonId
+            val muteUntil = when (selectedOptionId) {
+                R.id.rb8Hours -> System.currentTimeMillis() + 8 * 60 * 60 * 1000L
+                R.id.rb1Week -> System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000L
+                R.id.rbAlways -> 33322263675000
+                else -> 0L
+            }
+
+            if (muteUntil > 0L) {
+                muteSelectedConversations(muteUntil)
+            } else {
+                Toast.makeText(requireContext(), "Please select a valid option", Toast.LENGTH_SHORT).show()
+            }
+
+            builder.dismiss()
+        }
+
+        builder.setCanceledOnTouchOutside(false)
+        builder.show()
+    }
+
+    private fun muteSelectedConversations(muteUntil: Long) {
+        if (selectedConversations.isNotEmpty()) {
+            val mutedConversations = selectedConversations.map { conversation ->
+                MutedConversation().apply {
+                    val isGroup = conversation.conversationType == CometChatConstants.CONVERSATION_TYPE_GROUP
+                    id = if (isGroup) (conversation.conversationWith as Group).guid else (conversation.conversationWith as User).uid
+                    type = if (isGroup) MutedConversationType.GROUP else MutedConversationType.ONE_ON_ONE
+                    until = muteUntil
+                }
+            }
+
+            CometChatNotifications.muteConversations(mutedConversations, object : CometChat.CallbackListener<String>() {
+                override fun onSuccess(response: String) {
+                    Toast.makeText(requireContext(), "Conversations muted successfully", Toast.LENGTH_SHORT).show()
+                    selectedConversations.clear()
+                    getMutedConversations()
+                    cAdapter.notifyDataSetChanged()
+                    if (selectedConversations.isEmpty()) {
+                        actionMode?.finish()
+                    }
+                }
+
+                override fun onError(e: CometChatException) {
+                    Log.e("MuteConversation", e.message.toString())
+                    Toast.makeText(requireContext(), "Failed to mute conversations: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            })
+        } else {
+            Toast.makeText(requireContext(), "No conversations selected to mute", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun unmuteSelectedConversations() {
+        if (selectedConversations.isNotEmpty()) {
+            val unmutedConversations = selectedConversations.map { conversation ->
+                UnmutedConversation().apply {
+                    val isGroup = conversation.conversationType == CometChatConstants.CONVERSATION_TYPE_GROUP
+                    id = if (isGroup) (conversation.conversationWith as Group).guid else (conversation.conversationWith as User).uid
+                    type = if (isGroup) MutedConversationType.GROUP else MutedConversationType.ONE_ON_ONE
+                }
+            }
+
+            CometChatNotifications.unmuteConversations(unmutedConversations, object : CometChat.CallbackListener<String>() {
+                override fun onSuccess(response: String) {
+                    Toast.makeText(requireContext(), response, Toast.LENGTH_SHORT).show()
+                    selectedConversations.clear()
+                    getMutedConversations()
+                    cAdapter.notifyDataSetChanged()
+                    if (selectedConversations.isEmpty()) {
+                        actionMode?.finish()
+                    }
+                }
+
+                override fun onError(e: CometChatException) {
+                    Log.e("MuteConversation", e.message.toString())
+                    Toast.makeText(requireContext(), "Failed to mute conversations: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            })
+        } else {
+            Toast.makeText(requireContext(), "No conversations selected to mute", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun deleteSelectedConversations() {

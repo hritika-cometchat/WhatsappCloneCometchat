@@ -706,6 +706,7 @@ class ConversationMsgActivity : AppCompatActivity() {
             actionMode = startActionMode(object : ActionMode.Callback {
                 override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
                     mode?.menuInflater?.inflate(R.menu.menu_action_mode_edit_delete, menu)
+                    menu?.findItem(R.id.menu_mute)?.setVisible(false)
                     return true
                 }
 
