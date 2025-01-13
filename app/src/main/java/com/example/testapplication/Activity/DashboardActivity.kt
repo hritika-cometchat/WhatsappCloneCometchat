@@ -13,7 +13,9 @@ import com.cometchat.calls.core.CometChatCalls
 import com.cometchat.chat.core.AppSettings
 import com.cometchat.chat.core.Call
 import com.cometchat.chat.core.CometChat
+import com.cometchat.chat.core.CometChatNotifications
 import com.cometchat.chat.exceptions.CometChatException
+import com.cometchat.chat.models.NotificationPreferences
 import com.example.testapplication.AppConstants
 import com.example.testapplication.AppConstants.CALL_RECEIVER_LISTENER
 import com.example.testapplication.Fragment.CallLogFragment
@@ -28,15 +30,16 @@ class DashboardActivity : AppCompatActivity() {
     private val conversationFragment = ConversationFragment()
     private val callLogsFragment = CallLogFragment()
     private val groupFragment = GroupListFragment()
+    private var isPrivacyTemplate = false
 
-    private lateinit var binding:ActivityDashboardBinding
+    private lateinit var binding: ActivityDashboardBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityDashboardBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        fetchPreferences()
         supportActionBar?.elevation = 0F
-
         initFragment()
         initApp()
         initCall()
@@ -54,16 +57,26 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun initFragment() {
         val fragmentType = intent.getStringExtra("FRAGMENT_TYPE").orEmpty()
+        val payload = intent.getStringExtra(AppConstants.NOTIFICATION_PAYLOAD).orEmpty()
+        val convoFragment = conversationFragment.apply {
+            if (payload.isNotEmpty()) {
+                arguments = Bundle().apply {
+                    putString(AppConstants.NOTIFICATION_PAYLOAD, payload)
+                }
+            }
+        }
         when {
             fragmentType.contains("GroupFragment") -> {
                 setCurrentFragment(groupFragment)
                 binding.bottomNavigationView.selectedItemId = R.id.menuGroups
             }
+
             fragmentType.contains("CallFragment") -> {
                 setCurrentFragment(callLogsFragment)
                 binding.bottomNavigationView.selectedItemId = R.id.menuCalls
             }
-            else -> setCurrentFragment(conversationFragment)
+
+            else -> setCurrentFragment(convoFragment)
         }
     }
 
@@ -95,19 +108,23 @@ class DashboardActivity : AppCompatActivity() {
             .setRegion(AppConstants.REGION)
             .build()
 
-        CometChatCalls.init( this,  callAppSettings, object : CometChatCalls.CallbackListener<String>() {
-            override fun onSuccess(p0: String?) {
-                Log.i("CallApp", "$p0")
-            }
-            override fun onError(p0: com.cometchat.calls.exceptions.CometChatException?) {
-                Log.i("CallApp", "$p0")
-            }
-        })
+        CometChatCalls.init(
+            this,
+            callAppSettings,
+            object : CometChatCalls.CallbackListener<String>() {
+                override fun onSuccess(p0: String?) {
+                    Log.i("CallApp", "$p0")
+                }
+
+                override fun onError(p0: com.cometchat.calls.exceptions.CometChatException?) {
+                    Log.i("CallApp", "$p0")
+                }
+            })
     }
 
-    private fun setCurrentFragment(fragment : Fragment){
-        title = when(fragment){
-            conversationFragment-> "WhatsApp"
+    private fun setCurrentFragment(fragment: Fragment) {
+        title = when (fragment) {
+            conversationFragment -> "WhatsApp"
             groupFragment -> "Groups"
             callLogsFragment -> "Calls"
             else -> "WhatsApp"
@@ -121,9 +138,11 @@ class DashboardActivity : AppCompatActivity() {
     private fun logout() {
         CometChat.logout(object : CometChat.CallbackListener<String>() {
             override fun onSuccess(p0: String?) {
-                Toast.makeText(this@DashboardActivity, "Logout Successfully", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@DashboardActivity, "Logout Successfully", Toast.LENGTH_SHORT)
+                    .show()
                 val intent = Intent(this@DashboardActivity, MainActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
+                    flags =
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
                 }
                 startActivity(intent)
             }
@@ -138,9 +157,10 @@ class DashboardActivity : AppCompatActivity() {
         CometChat.addCallListener(CALL_RECEIVER_LISTENER, object : CometChat.CallListener() {
             override fun onOutgoingCallAccepted(call: Call?) {
             }
+
             override fun onIncomingCallReceived(call: Call?) {
                 startActivity(Intent(this@DashboardActivity, CallActivity::class.java).apply {
-                    putExtra("SESSION_ID",call?.sessionId)
+                    putExtra("SESSION_ID", call?.sessionId)
                     putExtra("EXTRA_RECEIVE_CALL", true)
                     putExtra("EXTRA_INITIATE", Gson().toJson(call?.callInitiator))
                 })
@@ -160,13 +180,57 @@ class DashboardActivity : AppCompatActivity() {
         })
     }
 
+    private fun fetchPreferences() {
+        CometChatNotifications.fetchPreferences(object :
+            CometChat.CallbackListener<NotificationPreferences>() {
+            override fun onSuccess(notificationPreferences: NotificationPreferences) {
+                isPrivacyTemplate = notificationPreferences.usePrivacyTemplate
+                invalidateOptionsMenu()
+            }
+
+            override fun onError(e: CometChatException) {
+                Log.e("MutePreference", e.message.toString())
+            }
+        })
+    }
+
+
+    private fun setPrivacyTemplate() {
+        val updatedPreferences = NotificationPreferences().apply {
+            usePrivacyTemplate = !isPrivacyTemplate
+        }
+        CometChatNotifications.updatePreferences(
+            updatedPreferences,
+            object : CometChat.CallbackListener<NotificationPreferences?>() {
+                override fun onSuccess(notificationPreferences: NotificationPreferences?) {
+                    Toast.makeText(
+                        this@DashboardActivity,
+                        "$notificationPreferences updated",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    isPrivacyTemplate = notificationPreferences!!.usePrivacyTemplate
+                    invalidateOptionsMenu()
+                }
+
+                override fun onError(e: CometChatException) {
+                    Toast.makeText(this@DashboardActivity, "$e", Toast.LENGTH_SHORT).show()
+                    Log.e("Error Privacy Template", "$e")
+                }
+            })
+    }
+
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.dashboard_menu, menu)
+        menu?.findItem(R.id.menuCamera)?.setVisible(false)
+        val title = if (isPrivacyTemplate) getString(R.string.privacy_off) else getString(R.string.privacy_on)
+        menu?.findItem(R.id.menuPrivacy)?.title = title
         return super.onCreateOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when(item.itemId){
+        when (item.itemId) {
+            R.id.menuPrivacy -> setPrivacyTemplate()
             R.id.menuProfile -> startActivity(Intent(this, UserDetailsActivity::class.java))
             R.id.menuLogout -> logout()
         }
@@ -175,7 +239,7 @@ class DashboardActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == RESULT_OK){
+        if (requestCode == RESULT_OK) {
             initFragment()
         }
     }
