@@ -194,10 +194,29 @@ class DashboardActivity : AppCompatActivity() {
         })
     }
 
+    private fun fetchAndSetPrivacy(){
+        CometChatNotifications.fetchPreferences(object :
+            CometChat.CallbackListener<NotificationPreferences>() {
+            override fun onSuccess(notificationPreferences: NotificationPreferences) {
+                // Display a toggle for use privacy option
+                val usePrivacyTemplate = notificationPreferences.usePrivacyTemplate
+                Log.e("-------->", "$usePrivacyTemplate ${CometChat.getLoggedInUser()}")
+                setPrivacyTemplate(usePrivacyTemplate)
+            }
 
-    private fun setPrivacyTemplate() {
+            override fun onError(e: CometChatException) {
+                Log.e("-------->", "$e ${CometChat.getLoggedInUser()}")
+            }
+        })
+    }
+
+
+    private fun setPrivacyTemplate(isPrivacy : Boolean = false ) {
         val updatedPreferences = NotificationPreferences().apply {
-            usePrivacyTemplate = !isPrivacyTemplate
+//            usePrivacyTemplate = !isPrivacyTemplate
+            Log.e("-------->updated", "$usePrivacyTemplate ${CometChat.getLoggedInUser()}")
+
+            usePrivacyTemplate = !isPrivacy
         }
         CometChatNotifications.updatePreferences(
             updatedPreferences,
@@ -214,7 +233,7 @@ class DashboardActivity : AppCompatActivity() {
 
                 override fun onError(e: CometChatException) {
                     Toast.makeText(this@DashboardActivity, "$e", Toast.LENGTH_SHORT).show()
-                    Log.e("Error Privacy Template", "$e")
+                    Log.e("-------->", "$e ${CometChat.getLoggedInUser()}")
                 }
             })
     }
@@ -230,7 +249,7 @@ class DashboardActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.menuPrivacy -> setPrivacyTemplate()
+            R.id.menuPrivacy -> fetchAndSetPrivacy()
             R.id.menuProfile -> startActivity(Intent(this, UserDetailsActivity::class.java))
             R.id.menuLogout -> logout()
         }
